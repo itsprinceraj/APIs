@@ -7,7 +7,23 @@ const secKey = process.env.JWT_SEC;
 exports.auth = (req, res, next) => {
   try {
     // fetch token from req.body
-    const token = req.body.token;
+
+    // there are three ways to fetch jwt token for authentication;
+
+    // console.log(`cookie: ${req.cookies.token}`);
+    // console.log(`body: ${req.body.token}`);
+    // console.log(`header: ${req.header("Authorization")}`);
+
+    const authHeader = req.header("Authorization");
+    const token =
+      (authHeader && authHeader.split(" ")[1]) ||
+      req.body.token ||
+      req.cookies.token; // this is the syntax for authentication using bearer header
+
+    // const token =
+    // req.cookies.token ||
+    // req.body.token ||
+    // req.header("Authorization").replace("Bearer" ,"")
 
     // if token does not exist , then send response
     if (!token) {
@@ -21,10 +37,18 @@ exports.auth = (req, res, next) => {
     // if token found. Then, Start Verification
 
     try {
-      const decoded = jwt.verify(token, secKey); // jwt verify method returns a decoded object ;
+      jwt.verify(token, secKey, (err, decoded) => {
+        // jwt verify method returns a decoded object ;
+        if (err) {
+          res.status(402).json({
+            success: false,
+            message: "Verification Failed",
+          });
+        }
+        // Store decoded token data in req.user
+        req.user = decoded;
+      });
 
-      // Store decoded token data in req.user
-      req.user = decoded;
       next();
     } catch (err) {
       res.status(401).json({
@@ -33,6 +57,7 @@ exports.auth = (req, res, next) => {
       });
     }
   } catch (err) {
+    console.log(err);
     res.status(401).json({
       success: false,
       message: "Something Went Wrong",
