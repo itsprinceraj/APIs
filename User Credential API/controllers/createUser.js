@@ -68,11 +68,11 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
 
     // check password is same of not
-    const user = await Auth.findOne({ email }); // the first entry where email will match , it will return whole data to the user object
+    let user = await Auth.findOne({ email }); // the first entry where email will match , it will return whole data to the user object
 
     // if user not found in database
     if (!user) {
-      return res.status(404).json({
+      return res.status(208).json({
         success: false,
         message: "user not found",
       });
@@ -98,6 +98,7 @@ exports.login = async (req, res) => {
 
       const token = jwt.sign(payload, secKey);
 
+      user = user.toObject();
       // create a new entry to the database using user object
       user.token = token;
 
@@ -107,16 +108,16 @@ exports.login = async (req, res) => {
       // now create a cookie and set it with response
       res.cookie("userCookie", user, {
         maxAge: 3600000,
-        httpOnly: true, // httpOnly means , the will not be accessible on client side
-        // token,
-        user,
+        httpOnly: true, // httpOnly means , cookie data will not be accessible on client side
         secure: true,
+        token,
       });
 
       // send success flag with response status code
       res.status(200).json({
         success: true,
         token,
+        user,
         payload,
         message: "Authentication done , thankyou for loging in",
       });
