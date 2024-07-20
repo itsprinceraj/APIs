@@ -3,8 +3,8 @@ import { body, ContextRunner, validationResult } from "express-validator";
 
 export const validate = (validations: ContextRunner[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    for (let validaion of validations) {
-      const result = await validaion.run(req);
+    for (let validation of validations) {
+      const result = await validation.run(req);
       if (!result.isEmpty()) break; // single statement can be written in single line
     }
     const errors = validationResult(req);
